@@ -23,8 +23,12 @@
                 placeholder="请输入标题">
                 </el-input>
             </el-form-item>
-            <el-form-item label="封面">
-            </el-form-item>
+            <div>
+                <p>上传封面</p>
+                <div>点击选择封面
+                    <div class="none"><input type="file" ref="file" @change="inpChange" accept=".png"/></div>
+                </div>
+            </div>
             <el-form-item label="视频简介" prop="profileText">
                 <el-input
                     type="textarea"
@@ -66,13 +70,12 @@
                     <div class="none"><input type="file" ref="file" @change="inpChange" accept=".ass"/></div>
                     </el-form-item>
                 </el-form>
-                开发中
                 <span slot="footer" class="dialog-footer">
                     <el-button @click="()=>{uploadSubtitleDialogVisible = false
                         this.$refs.file.value = ''}">取 消</el-button>
                     <el-button type="primary" @click="uploadSubtitle()" :disabled="uploadDisable">确 定</el-button>
                 </span>
-                </el-dialog>
+            </el-dialog>
         </div>
         <button @click="save()">保存</button>
     </div>
@@ -235,7 +238,7 @@ import {setUploadData,md5} from '@/utils/fileCheck';
                     if(hasFile){
                         this.updateStatus="上传成功"
                     }else{
-                        await this.uploadSinge(FileData,this.videoUploadSuccess)
+                        await this.uploadSinge(this.FileData,this.videoUploadSuccess)
                     }
                 }else{
                     if(hasFile){
@@ -329,7 +332,7 @@ import {setUploadData,md5} from '@/utils/fileCheck';
                 const data = new FormData();
                 data.append("chunkTotal",this.FileData.totalChunkNum)
                 data.append("fileMD5",this.FileData.md5)
-                data.append("type",this.FileData.type)
+                data.append("type",this.FileData.extension)
                 data.append("uploader",this.$store.state.isLogin.uid)
                 data.append("originalFileName",this.FileData.originalFileName)
                 await mergeChunk(data).then(res=>{

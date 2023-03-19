@@ -87,10 +87,7 @@ export default {
         }
     },
     mounted() {
-        if (!this.$store.state.isLogin && !localStorage.getItem("token")) {
-            this.$message({type:'warning',message:'请先登录'})
-            this.$router.push('/login')
-        }
+        
     },
     created() {
 

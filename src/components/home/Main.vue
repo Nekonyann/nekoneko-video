@@ -5,10 +5,11 @@
         <div class="card-list">
             <div class="card-head">
                 <div class="name">首页视频</div>
-                <button @click="loadMore()">加载更多</button>
+                <button @click="loadMore()" class="get-more">
+                    <p>加 载</p><p>更 多</p></button>
             </div>
             <div class="zone-list-box" v-if="(data.length!=0)">
-            <!-- v-infinite-scroll="loadMore()"
+            <!-- v-infinite-scroll="loadMore"
             infinite-scroll-disabled="loading" 
             infinite-scroll-delay="300" -->
                 <div v-for="(data, index) of data" :key="index" class="grid-content">
@@ -24,8 +25,8 @@
                     </router-link>
                 </div>
             </div>
-            <p v-if="loading">加载中</p>
-            <div v-else>没有更多数据惹QAQ.......</div>
+            <div v-if="loading" class="info">加载中</div>
+            <div v-else class="info">没有更多数据惹QAQ.......</div>
         </div>
     </div>
 </template>
@@ -143,6 +144,29 @@ export default {
     
 }
 
+.info{
+    height: 80px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #999;
+}
+
+.get-more{
+    position: fixed;
+    right: 20px;
+    bottom: 70px;
+    align-self: center;
+    width: 60px;
+    height: 60px;
+    background-color: #2CA2EC;
+    border-radius: .3333rem;
+    font-size: 15px;
+    color: #fff;
+    >p{
+        padding: 1px;
+    }
+}
 .el-col {
     border-radius: 4px;
 }

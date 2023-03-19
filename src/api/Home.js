@@ -3,7 +3,7 @@ import request from '@/utils/request'
 const path="/api/v0/video"
 /**
  * 
- * @param {*} dara 
+ * @param {*} page 
  * @returns 
  */
 export function getVideoList(params){

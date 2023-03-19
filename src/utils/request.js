@@ -1,31 +1,41 @@
 // 封装axios
+import router from "@/router";
 import axios from "axios";
 import{ Message } from 'element-ui'
 
 const instance = axios.create({
     baseURL:'http://127.0.0.1:9000',
     timeout:6000,
+    withCredentials: true,
     headers: {
-        // 'Content-Type': 'application/x-www-form-urlencoded'
+        // 'Content-Type': 'application/x-www-form-urlencoded'  
     }
 })
 
 //拦截器 - 请求拦截
-// instance.interceptors.request.use(config=>{
-//     let token = sessionStorage.getItem('token')
-//     if(token){
-//         config.headers = {
-//             token
-//         }
-//     }
-//     return config
-// }, err=>{
-//     return Promise.reject(err)
-// });
+instance.interceptors.request.use(config=>{
+    let authorization = localStorage.getItem('authorization')
+    if(authorization){
+        config.headers['Authorization'] = authorization
+    }
+    return config
+}, err=>{
+    return Promise.reject(err)
+});
 
 
 // 拦截器 - 响应拦截
 instance.interceptors.response.use(res =>{
+    if(res.data.code === 401){
+        Message.error('请登录')
+    }
+    if(res.data.code === 403){
+        Message.error('请重新登录')
+        localStorage.removeItem('authorization')
+        localStorage.removeItem('token')    
+        router.push({path:'/login'})
+        return
+    }
     return res
 },err=>{
     if(err&&err.response){

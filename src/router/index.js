@@ -1,5 +1,7 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
+import store from '@/store'
+import { Message } from 'element-ui';
 
 // 路由懒加载
 const Home = () => import('@/views/Home.vue')
@@ -38,6 +40,11 @@ const routes = [
     component: Login
   },
   {
+    path:'/register',
+    name:'register',
+    component: Register
+  },
+  {
     path:'/user/:uid(\\d+)',
     name:'userhome',
     component: UserHome,
@@ -52,6 +59,9 @@ const routes = [
     path:'/videoupload',
     component: VideoUpload,
     redirect:'/videoupload/main',
+    meta: {
+      requiresAuth: true // 需要登录才能访问
+    },
     children:[
       {
         name:'main',
@@ -68,7 +78,10 @@ const routes = [
   {
     path:'/video/nya:nid(\\d+)/watchtog',
     name:'watchtog',
-    component: WatchTogether
+    component: WatchTogether,
+    meta: {
+      requiresAuth: true
+    }
   },
   {
     path:'/search/video',
@@ -93,6 +106,19 @@ const router = new VueRouter({
   routes
 })
 
-// router.beforeEach((to,from,next)=>{})
+router.beforeEach((to,from,next)=>{
+  if (to.meta.requiresAuth) {  // 判断该路由是否需要登录权限
+    console.log(store.state)
+    if (localStorage.getItem("authorization")&&store.state.isLogin) {  // 获取当前的token是否存在
+      next();
+    } else {
+      Message.error("请先登录")
+      next(false)
+    }
+  }
+  else { // 如果不需要权限校验，直接进入路由界面
+    next();
+  }
+})
 
 export default router

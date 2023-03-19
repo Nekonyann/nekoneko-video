@@ -18,7 +18,7 @@ export function checkChunk(data){
     })
 }
 
-export function uploadChunk(){
+export function uploadChunk(data){
     return request({
         url:`${path}/uploadChunk`,
         method:'post',
@@ -26,11 +26,11 @@ export function uploadChunk(){
     })
 }
 
-export function mergeChunk(){
+export function mergeChunk(data){
     return request({
         url:`${path}/mergeChunk`,
         method:'post',
-        data
+        data,
     })
 }
 

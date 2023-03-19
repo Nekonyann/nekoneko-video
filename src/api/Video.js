@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 
-const path="/v0/video"
+const path="/api/v0/video"
 
 export function uploadVideoInfo(data){
     return request({

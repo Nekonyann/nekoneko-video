@@ -1,7 +1,7 @@
 <template>
     <div id="app">
         <div class="header">
-           <a>Neko!Neko!</a>
+           <a href="/">Neko!Neko!</a>
         </div>
         <div class="main">
             <div class="login-box">
@@ -13,8 +13,10 @@
                     <el-form-item label="密码" prop="password">
                         <el-input v-model="form.password" show-password></el-input>
                     </el-form-item>
-                        <button @click="onSub()" class="login-button" :loading="isLoading">登录</button>
                 </el-form>
+                <a>忘记密码</a>
+                <router-link to="/register" class="register">注册</router-link>
+                <button @click="onSub()" class="login-button" :loading="isLoading">登录</button>
             </div>
             
         </div>
@@ -48,7 +50,7 @@ export default{
         }
     },
     mounted(){
-        if(localStorage.getItem("token")||this.$store.state.isLogin){
+        if(localStorage.getItem("authorization")||this.$store.state.isLogin){
             this.$router.push("/home")
         }
     },
@@ -59,15 +61,12 @@ export default{
                 if (!valid) {return this.isLoading = false};
                 await Login(this.form).then((res)=>{
                     if(res.data.code===20011){
-                        if(res.data.data.enable===1){
                         this.$message.success("登录成功")
+                        localStorage.setItem('authorization',res.headers.authorization)
                         localStorage.setItem('token',JSON.stringify(res.data.data))
                         this.$router.push({path:"/home",params:{noCache:true}})
-                        }else{
-                        this.$message.error("您没有权限")
-                        this.isLoading = false
-                        }
                     }else{
+                    localStorage.removeItem('token');
                     this.$message.error("账号或密码错误")
                     this.isLoading = false
                     }
@@ -80,14 +79,6 @@ export default{
         onSub:throttle(function(form){
             this.onSubmit(form)
         },4000),
-        watch: {
-		// 路由push相同地址不同参数时 不会自动刷新页面，这里通过watch监听路由变化，一但发生变化reload刷新
-		$route(to, from) {
-			if (to !== from) {
-				this.reload();
-			}
-		},
-	},
     }
 }
 </script>

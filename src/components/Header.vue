@@ -79,10 +79,17 @@ export default {
         //     if (command == 'loginOut') {
         //     }
         // },
-        loginOut(){
-            window.localStorage.removeItem('token')
-            this.$store.state.isLogin = false
-            this.$message.success("账号已退出")
+        async loginOut(){
+            await Logout().then(res =>{
+                if(res.data.code = 20011){
+                    window.localStorage.removeItem('token')
+                    window.localStorage.removeItem('authorization')
+                    this.$store.state.isLogin = false
+                    this.$message.success(res.data.message)
+                }else{
+                    this.$message.error("error")
+                }
+            })
         },
         handleSearch(){
             if(this.serch.length!=0){
