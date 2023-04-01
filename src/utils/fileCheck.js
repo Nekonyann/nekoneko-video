@@ -77,7 +77,6 @@ export function setUploadData(file,md5,type){
         'fileSizeformat':fileSizeformat,
         'fileType':type//文件类型
     }
-    console.log(data)
     return data
 }
 
@@ -85,6 +84,7 @@ export function setUploadData(file,md5,type){
 export function VideoTotalSizeformat(totalSize){
     let formatSize = totalSize; 
     if (totalSize < 1024) {
+        formatSize = formatSize.toFixed(2);
         return formatSize + 'B';
     } else if (totalSize < (1024*1024)) {
         formatSize = totalSize / 1024;

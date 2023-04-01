@@ -19,10 +19,11 @@
 </template>
 
 <script>
-import {throttle,getNowTime} from '@/utils/utils'
+import {throttle,getNowTime,formatTime} from '@/utils/utils'
 let socket
 
 export default {
+    props:['nid'],
     data() {
         return {
             count: 0,
@@ -38,23 +39,27 @@ export default {
     },
     created() {
         this.init()
+        console.log(this.nid)
     },
     methods: {
         //构建进出胶囊消息
         createUserContent(type,username){
             const newMeJoinTem = `
             <span class="new-join" v-if="isJoin"><span class="mine-name">${username}</span> 加入了房间</span>`
-            const newOtherJionTem = `
+            const newOtherJoinTem = `
             <span class="new-join"><span class="other-name">${username}</span> 加入了房间</span>`
             const newOtherQuitTem = `
             <span class="new-join"><span class="exit-name">${username}</span> 退出了房间</span>`
             if(type ==1){
                 this.$refs.message.innerHTML+=newMeJoinTem
             }else if(type==2){
-                this.$refs.message.innerHTML+=newOtherJionTem
+                this.$refs.message.innerHTML+=newOtherJoinTem
             }
             if(type==0){
                 this.$refs.message.innerHTML+=newOtherQuitTem
+            }
+            if(type==10){
+                this.$refs.message.innerHTML+=processControlTem
             }
             this.scrollToBottom()
         },
@@ -97,12 +102,16 @@ export default {
                 </div>
                 <div class="time">${time}</div>
             </div>`
-
             if(isMe){
                 this.$refs.message.innerHTML+=mineContent
             }else{
                 this.$refs.message.innerHTML+=otherContent
             }
+            this.scrollToBottom()
+        },
+        createProcessControl(isMe,username,context,time){
+            const processControlTem = `<span class="new-join">${time} <span class="other-name">${username}</span> ${context}</span>`
+            this.$refs.message.innerHTML+=processControlTem
             this.scrollToBottom()
         },
         init() {
@@ -113,7 +122,7 @@ export default {
                 this.$message({ type: 'error', message: "您的浏览器不支持聊天室,将禁用" })
                 this.type=false
             } else {
-                let socketUrl = `ws://localhost:9000/wbserver/${username}`
+                let socketUrl = `ws://localhost:9000/wbserver/${this.nid}/${username}`
                 // if (socket == null) {
                 //     this.$message({ type: 'error', message: '房间连接错误' })
                 //     return
@@ -130,8 +139,8 @@ export default {
                 socket.onmessage = (msg) =>{
                     let data = JSON.parse(msg.data)
                     console.log(`收到消息${msg.data}`)
-                    _this.isSystem = data.isSystem
-                    if(this.isSystem){
+                    _this.type = data.type
+                    if(this.type == 'isSystem'){
                         _this.count = data.count
                         _this.users = data.users
                         if(data.newUser!=null){
@@ -146,6 +155,13 @@ export default {
                             _this.delUser = data.delUser
                             _this.createUserContent(0,this.delUser)
                         }
+                    }else if(this.type == 'proTime'){
+                        let from = data.from
+                        let message = `进度条拖至:${formatTime(data.message)}`
+                        let time = data.time
+                        let proTime = data.message
+                        this.$emit('proTime',proTime)
+                        _this.createProcessControl(true,from,message,time)
                     }else{
                         let from = data.from
                         let message = data.message
@@ -155,15 +171,16 @@ export default {
                         }else{
                             _this.createContent(false,from,message,time)
                         }
-                        
                     }
                     
                 };
                 socket.onclose = function () {
                     _this.$message({ type: 'info', message: '退出一起看房间' })
+                    _this.$router.push({path:`/video/${this.nid}`})
                 };
             }
         },
+        //发送文字消息
         send() {
             if (!this.text) {
                 this.$message({ type: 'warning', message: '请输入内容' })
@@ -179,10 +196,24 @@ export default {
             let message = {
                 from: this.user.username,
                 message: content,
+                type:'txt',
+                nid: this.nid,
                 time:getNowTime()
             }
             socket.send(JSON.stringify(message));  // 将组装好的json发送给服务端，由服务端进行转发
             this.isLoading=false
+        },
+        //发送视频进度条时间
+        sendProcessTime(proTime){
+            if (proTime =="") return
+            let message ={
+                from: this.user.username,
+                message: `${proTime}`,
+                type:'proTime',
+                nid: this.nid,
+                time:getNowTime()
+            }
+            socket.send(JSON.stringify(message));
         },
         //获取历史消息
         getHistory(){
@@ -192,7 +223,6 @@ export default {
         scrollToBottom(){
             this.$nextTick(()=>{
             let chatform = this.$refs.message;
-            console.log(chatform.scrollHeight)
             chatform.scrollTop = chatform.scrollHeight;
             });
         },

@@ -6,7 +6,7 @@
         </div>
         <div class="nav-search-box">
             <form>
-                <el-input v-model="serch" placeholder="搜索..."></el-input>
+                <el-input v-model="search" placeholder="搜索..."></el-input>
                 <el-button slot="append" icon="el-icon-search" @click="handleSearch()"></el-button>
             </form>
         </div>
@@ -64,7 +64,7 @@ export default {
                 name: '',
                 face: ''
             },
-            serch: ''
+            search: ''
         }
     },  
     mounted() {
@@ -92,8 +92,8 @@ export default {
             })
         },
         handleSearch(){
-            if(this.serch.length!=0){
-                this.$router.push({path:'/search/video',query:{keywords:this.serch}})
+            if(this.search.length!=0){
+                this.$router.push({path:'/search/video',query:{keywords:this.search}})
             }else{
                 this.$message.warning("你似乎没有输入内容呢")
             }

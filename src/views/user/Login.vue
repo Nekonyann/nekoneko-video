@@ -14,7 +14,7 @@
                         <el-input v-model="form.password" show-password></el-input>
                     </el-form-item>
                 </el-form>
-                <a>忘记密码</a>
+                <a>忘记密码?</a>
                 <router-link to="/register" class="register">注册</router-link>
                 <button @click="onSub()" class="login-button" :loading="isLoading">登录</button>
             </div>

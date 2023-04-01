@@ -30,9 +30,15 @@ export default {
 </script>
 
 <style lang="less" scoped>
+#app{
+  height: auto;
+}
 .el-header{
     padding: 0;
     height: 50px !important;
+  }
+  .el-main{
+    height: 100%;
   }
   .el-container{
     height: 100%;
@@ -45,5 +51,8 @@ export default {
     padding: 10px;
     align-items: center;
     color: #58666e;
+    width: 100%;
+    position: relative;
+    bottom: 0;
   }
 </style>

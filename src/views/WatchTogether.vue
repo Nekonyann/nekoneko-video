@@ -9,13 +9,10 @@
                     <div class="video-box">
                         <div class="info">
                             <div class="video-info">
-                                <p class="video-title">测试用视频{{ videoInfo.title }}</p>
+                                <p class="video-title">{{ videoInfo.title }}</p>
                                 <p class="video-data">
                                     <span>分区:隐藏分区</span>
-                                    <span>视频号:{{ videoInfo.nyaId }}</span>
-                                    <span><i class="el-icon-video-play"></i>播放量:{{ videoInfo.view }}</span>
-                                    <span>弹幕数:{{ videoInfo.danmaku }}</span>
-                                    <span>上传时间:{{ videoInfo.uploadTime }}</span>
+                                    <span>视频号:{{ videoInfo.nid }}</span>
                                 </p>
                             </div>
                             <div class="uploder-info">
@@ -26,25 +23,27 @@
                                 </div>
                             </div>
                         </div>
-                        <div id="nekoneko-player">
-                            <span id="cur-time">{{ timer }}</span>
-                            <video src=""></video>
-                        </div>
+                        <nVideoPlayer 
+                        :nid="videoInfo.nid"
+                        ref="nVideoPlayer"
+                        @change="processControl"></nVideoPlayer>
                     </div>
                     <div class="info-box">
                         <div class="left-info">
-                            <div class="arc_toolbar">
-                                <span class="like arc-item" title="点赞数"><i class=""></i>111{{ videoInfo.like }}</span>
-                                <span class="unlike arc-item" title="点踩数"><i class=""></i>111{{ videoInfo.unlike
-                                }}</span>
-                                <span class="fav arc-item" title="收藏数"><i class=""></i>111{{ videoInfo.favorite
-                                }}</span>
-                            </div>
+                            同步进度
+                            <el-switch
+                                v-model="synchronous"
+                                active-color="#13ce66"
+                                inactive-color="#ff4949">
+                                </el-switch>
                             <div class="video-desc">
                                 <div class="desc-info">视屏简介</div>
                             </div>
                             <div class="online-communit-box">
-                                <OnlineComList></OnlineComList>
+                                <OnlineComList 
+                                :nid="videoInfo.nid"
+                                ref="OnlineComList"
+                                @proTime="proTime"></OnlineComList>
                             </div>
                         </div>
                         <div class="this-video_list">
@@ -61,21 +60,21 @@
 <script>
 import Header from '@/components/Header.vue';
 import OnlineComList from '@/components/videopage/components/OnlineComList.vue';
+import nVideoPlayer from '@/components/videopage/components/VideoPlayer.vue';
 import request from "@/utils/request";
 
 export default {
     name:'watchtog',
     components: {
         Header,
+        nVideoPlayer,
         OnlineComList
     },
     data() {
         return {
             videoInfo: {
                 title: '',
-                nyaId: '',
-                view: '',
-                danmaku: '',
+                nid: '',
                 uploadTime: '',
                 uploader: {
                     face: '',
@@ -83,17 +82,28 @@ export default {
                 },
                 pages: []
             },
-            timer: null
+            timer: null,
+            synchronous:false
         }
     },
     mounted() {
-        
+
     },
     created() {
-
+        this.videoInfo.nid=this.$route.params.nid
+        console.log(this.videoInfo.nid)
     },
     methods: {
-
+        async processControl(time){
+            if(this.synchronous){
+            this.$refs.OnlineComList.sendProcessTime(time)
+            }
+        },
+        proTime(time){
+            if(this.synchronous){
+                this.$refs.nVideoPlayer.getProcessTime(time)
+            }
+        }
     },
 }
 
@@ -147,28 +157,6 @@ export default {
                         flex-direction: column;
                         width: 210px;
                     }
-                }
-            }
-
-            #nekoneko-player {
-                position: relative;
-
-                #cur-time {
-                    position: absolute;
-                    top: 0px;
-                    right: 0px;
-                    z-index: 10;
-                    font-size: x-large;
-                    font-weight: bold;
-                    margin: 1rem;
-                    color: rgb(156, 156, 156);
-                    opacity: 0.48;
-                }
-
-                >video {
-                    width: 100%;
-                    height: 556px;
-                    background-color: aqua;
                 }
             }
         }

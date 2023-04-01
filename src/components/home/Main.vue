@@ -5,10 +5,8 @@
         <div class="card-list">
             <div class="card-head">
                 <div class="name">首页视频</div>
-                <button @click="loadMore()" class="get-more">
-                    <p>加 载</p><p>更 多</p></button>
             </div>
-            <div class="zone-list-box" v-if="(data.length!=0)">
+            <div class="zone-list-box" v-if="(total!=0)">
             <!-- v-infinite-scroll="loadMore"
             infinite-scroll-disabled="loading" 
             infinite-scroll-delay="300" -->
@@ -27,6 +25,17 @@
             </div>
             <div v-if="loading" class="info">加载中</div>
             <div v-else class="info">没有更多数据惹QAQ.......</div>
+        </div>
+        <div class="function-box">
+            <button @click="loadMore()" class="get-more function-button">
+                    <p>加 载</p><p>更 多</p>
+            </button>
+            <el-backtop  :bottom="100" :right="20">
+                <button
+                class="function-button">
+                    <p>返 回</p><p>顶 部</p>
+                </button>
+            </el-backtop>
         </div>
     </div>
 </template>
@@ -78,6 +87,9 @@ export default {
 </script>
 
 <style lang="less" scoped>
+#app{
+    height: 100%;
+}
 @width: 220px;
 
 .el-row {
@@ -109,7 +121,7 @@ export default {
         border-radius: 4px;
         width: @width;
     }
-
+   
     .count {
         font-size: 12px;
         display: flex;
@@ -151,11 +163,16 @@ export default {
     align-items: center;
     color: #999;
 }
-
-.get-more{
+.function-box{
+    display:flex;
+    /deep/ .el-backtop{
+        width: 60px;
+        height: 60px;
+        bottom: 140px !important;
+    }
+    .function-button{
     position: fixed;
     right: 20px;
-    bottom: 70px;
     align-self: center;
     width: 60px;
     height: 60px;
@@ -163,10 +180,18 @@ export default {
     border-radius: .3333rem;
     font-size: 15px;
     color: #fff;
-    >p{
-        padding: 1px;
+        >p{
+            padding: 1px;
+        }
+    }
+    .function-button:hover{
+        background-color: #01B9F5;
+    }
+    .get-more{
+        bottom: 70px;
     }
 }
+
 .el-col {
     border-radius: 4px;
 }

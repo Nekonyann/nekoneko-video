@@ -18,6 +18,19 @@ export function selectByKeywords(params){
     })
 }
 
+export function getVideoListByUid(params){
+    let uid = params.uid
+    let page = params.page
+    return request({
+        url:`${path}/selectVideoPageByUid`,
+        method:'get',
+        params:{
+            page:page,
+            uid:uid
+        }
+    })
+}
+
 const cpath="/api/v0/comment"
 export function selectCommentByNid(params){
     return request({

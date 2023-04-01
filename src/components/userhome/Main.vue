@@ -52,7 +52,7 @@
             </div>
             <div class="page-index">
                 <div>她的视频</div>
-                <div class="zone-list-box" v-if="video.length!=0" >
+                <div class="zone-list-box" v-if="total!==0">
                     <div v-for="(video, index) of video" :key="index" class="grid-content">
                         <router-link target="_blank" :to="{name: 'video',params:{nid:video.nid}}"><img src="@/assets/images/test.png">
                         <div class="count">
@@ -66,25 +66,38 @@
                 <div v-else>
                     <p>没有更多数据惹QAQ</p>
                 </div>
+                <el-pagination
+                        class="pagination"
+                        background
+                        layout="prev, pager, next"
+                        :page-size="30"
+                        :hide-on-single-page="true"
+                        @current-change="handleCurrentChange"
+                        :total="total">
+                </el-pagination>
             </div>
         </div>
+        <div class="bottom-box"></div>
     </div>
 </template>
 
 <script>
 import {getUserInfoInVideo} from '@/api/User';
+import {getVideoListByUid} from '@/api/Video';
 export default{
     data(){
         return{
             userInfo:{},
-            video:[]
+            id:-1,
+            video:[],
+            index:1,
+            total:-1
         }
     },
     mounted(){
-        const _this= this
-        _this.id = _this.$route.params.uid
-        console.log(_this.$route.params.uid)
-        this.getUserInfo(_this.id)
+        this.id = this.$route.params.uid
+        this.getUserInfo(this.id)
+        this.getUserVideo(this.id)
     },
     methods:{
         async getUserInfo(uid){
@@ -97,6 +110,30 @@ export default{
                     this.$router.push("/404")
                 }
             })
+        },
+        async getUserVideo(uid){
+            let params = {
+                page : this.index,
+                uid : uid,
+                
+            }
+            await getVideoListByUid(params).then(res =>{
+                if(res.data.code ===20011){
+                    this.video = res.data.data.data
+                    this.total = res.data.data.totalCount
+                    if(this.video === undefined){
+                        this.video = null
+                        this.total = 0 
+                    }
+                }else{
+                    this.video=null
+                    this.$message.warning(res.data.message)
+                }
+            })
+        },
+        handleCurrentChange(val){
+            this.index = val
+            this.getUserVideo(this.id)
         },
         subscribe(){
             this.$message.info("你似乎点了关注按钮呢,但是没什么用")
@@ -177,9 +214,63 @@ export default{
     }
     .page-index{
         background-color: #fff;
+        min-height: 500px;
+        @width: 220px;
+        .grid-content {
+            width: @width;
+            display: inline-block;
+            margin: 0 10px;
+            img {
+                height: 140px;
+                border-radius: 4px;
+                width: @width;
+            }
+
+            .count {
+                font-size: 12px;
+                display: flex;
+                justify-content: space-between;
+                padding: 0 5px;
+            }
+
+            .title {
+                display: block;
+                font-size: 14px;
+                line-height: 20px;
+                margin: 10px 0 8px;
+                height: 40px;
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                transition: all ease .5s;
+            }
+
+            .title:hover,.upload-user:hover{
+            color: #2CA2EC;
+            }
+
+            .upload-user {
+                display: flex;
+                font-size: 12px;
+                color: #999;
+                transition: all ease .5s;
+            }
+        }
     }
     .b{
         margin-bottom: 10px;
+    }
+
+    .pagination{
+        display: flex;
+        width: 100%;
+        height: 70px;
+        justify-content: center;
+    }
+    .bottom-box{
+        height: 60px;
     }
 }
 </style>

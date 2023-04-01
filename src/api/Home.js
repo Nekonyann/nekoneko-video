@@ -8,7 +8,7 @@ const path="/api/v0/video"
  */
 export function getVideoList(params){
     return request({
-        url:`${path}/selectByPage`,
+        url:`${path}/selectVideoByPage`,
         method:'get',
         params:{page:params}
     })

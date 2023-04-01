@@ -18,11 +18,15 @@ export function checkChunk(data){
     })
 }
 
-export function uploadChunk(data){
+export function uploadChunk(data,onUploadProgress){
     return request({
         url:`${path}/uploadChunk`,
         method:'post',
-        data
+        data,
+        headers:{
+            'Content-Type':'multipart/form-data'
+        },
+        onUploadProgress:onUploadProgress
     })
 }
 
@@ -34,7 +38,7 @@ export function mergeChunk(data){
     })
 }
 
-export function uploadSingeFile(data){
+export function uploadSingeFile(data,onUploadProgress){
     return request({
         url:`${path}/updateFile`,
         method:'post',
@@ -42,5 +46,6 @@ export function uploadSingeFile(data){
         headers:{
             'Content-Type':'multipart/form-data'
         },
+        onUploadProgress: onUploadProgress
     })
 }
