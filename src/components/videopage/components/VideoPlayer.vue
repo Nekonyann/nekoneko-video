@@ -10,8 +10,10 @@
 <script>
 import {getNowTime} from '@/utils/utils'
 import {selectByNid} from '@/api/Home'
+import {updateVideoView} from '@/api/Video'
 
 import { Player,Popover,EVENT } from 'nplayer'
+import Danmaku from '@nplayer/danmaku'
 import ASS from 'assjs'
 import axios from 'axios'
 
@@ -27,6 +29,7 @@ const Subtitles = {
     }
     
 };
+
 export default {
     props:['nid'],
     data(){
@@ -36,7 +39,11 @@ export default {
                 ass:null,
                 value:-1
             },
+            // danmaItems:[],
+            danmaItems:{
+            },
             player:null,
+            firstPlayFlag:true,
             shouldTriggerSeekedEvent: true
         }
     },
@@ -100,7 +107,8 @@ export default {
                     controls:  [
                         ['play', 'volume', 'time', 'spacer',Subtitles, 'airplay', 'settings', 'web-fullscreen', 'fullscreen'],
                         ['progress']
-                    ]
+                    ],
+                    plugins:[new Danmaku(this.danmaItems)]
                 })
                 if(this.videoInfo.isSub == true){
                     const frag = document.createDocumentFragment()
@@ -195,10 +203,21 @@ export default {
                 this.initVideoPlayerEvents(player)
                 player.on(EVENT.SEEKED,()=>{
                     if(this.shouldTriggerSeekedEvent){
-                        console.log("执行")
                         const currentTime = player.currentTime
                         this.$emit('change',currentTime)
                     }
+                })
+                player.on(EVENT.PLAY,async ()=>{
+                    console.log(this.firstPlayFlag)
+                    if(this.firstPlayFlag){
+                        this.firstPlayFlag = false;
+                        setTimeout(()=>{
+                            updateVideoView(nid)
+                        },5000)
+                    }
+                })
+                player.on('DanmakuSend', (opts) => {
+                    console.log(opts)
                 })
             })
         },
@@ -217,7 +236,7 @@ export default {
     #nekoneko-player{
         position: relative;
         #cur-time{
-            position: absolute; 
+            position: absolute;
             top: 0px; 
             right: 0px; 
             z-index: 10; 
@@ -229,7 +248,7 @@ export default {
         }
         >.video{
         width: 100%;
-        height: 556px;
+        height: 100%;
         background-color: #000;
         }
         #my-container {
@@ -249,5 +268,10 @@ export default {
         //     z-index: 1000;
         //     pointer-events: none;
         // }
+    }
+    @media screen and (max-width:550px){
+        #nekoneko-player #cur-time{
+        display: none;
+        }
     }
 </style>

@@ -3,23 +3,33 @@ import VueRouter from 'vue-router'
 import store from '@/store'
 import { Message } from 'element-ui';
 
-// 路由懒加载
 const Home = () => import('@/views/Home.vue')
 const PageNotFound = () => import('@/views/404.vue')
 //user
 const Login = () => import('@/views/user/Login.vue')
 const Register = () => import('@/views/user/Register.vue')
 const UserHome = () => import ('@/views/user/UserHome.vue')
+//user account
+const Account =() => import('@/views/user/Account.vue')
 
 //video
 const Video = () => import('@/views/videopages/Video.vue')
-const VideoUpload = () => import('@/views/videopages/VideoUpload.vue')
 const WatchTogether = () => import('@/views/WatchTogether.vue')
-const UploadPage = () => import('@/components/platform/UploadPage.vue')
 const CheckFile = () => import('@/components/platform/Main.vue')
 
 //search
 const Search = () => import('@/views/search/Main.vue')
+
+//platform
+const VideoUpload = () => import('@/views/videopages/VideoUpload.vue')
+const PlatformHome = () => import('@/components/platform/Home.vue')
+const AudienceSubtitle = () => import('@/components/platform/AudienceSubtitle.vue')
+const Article = () => import('@/components/platform/Article.vue')
+const UploadPage = () => import('@/components/platform/UploadPage.vue')
+const ExtractSubtitles = () => import('@/components/platform/ExtractSubtitles.vue')
+
+//电子书
+const BookDock = () => import('@/views/ebook/BookDock.vue')
 
 Vue.use(VueRouter)
 
@@ -49,6 +59,12 @@ const routes = [
     name:'userhome',
     component: UserHome,
   },
+  {
+    path:'/account',
+    name:'account',
+    component:Account,
+    children:[],
+  },
   //video
   {
     path:'/video/nya:nid(\\d+)',
@@ -64,15 +80,43 @@ const routes = [
     },
     children:[
       {
+        name:'home',
+        path:'home',
+        component: PlatformHome
+      },
+      {
         name:'main',
-        path:'/videoupload/main',
+        path:'main',
         component: CheckFile,
       },
       {
         name:'uploadpage',
         path:'uploadpage',
         component: UploadPage
-      }
+      },
+      {
+        name:'extract-subtitles',
+        path:'extract-subtitles',
+        component:ExtractSubtitles
+      },
+      {
+        path:'upload-manager',
+        component:{render(h) {
+          return h('router-view')
+        },},
+        redirect:'article',
+        children:[
+          {
+            name:'article',
+            path:'article',
+            component:Article
+          },{
+            name:'audience-subtitles',
+            path:'audience-subtitles',
+            component:AudienceSubtitle
+          }
+        ]
+      },
     ]
   },
   {
@@ -87,6 +131,11 @@ const routes = [
     path:'/search/video',
     name:'search',
     component: Search
+  },
+  {
+    path:'/ebook',
+    name:'ebook',
+    component: BookDock
   },
   //404重定向
   {

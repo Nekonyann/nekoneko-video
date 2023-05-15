@@ -6,11 +6,14 @@ const path="/api/v0/video"
  * @param {*} page 
  * @returns 
  */
-export function getVideoList(params){
+export function getVideoList(page,items){
     return request({
         url:`${path}/selectVideoByPage`,
         method:'get',
-        params:{page:params}
+        params:{
+            page,
+            items
+        }
     })
 }
 

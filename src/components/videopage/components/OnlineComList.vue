@@ -122,7 +122,7 @@ export default {
                 this.$message({ type: 'error', message: "您的浏览器不支持聊天室,将禁用" })
                 this.type=false
             } else {
-                let socketUrl = `ws://localhost:9000/wbserver/${this.nid}/${username}`
+                let socketUrl = `wss://127.0.0.1:9000/wbserver/${this.nid}/${username}`
                 // if (socket == null) {
                 //     this.$message({ type: 'error', message: '房间连接错误' })
                 //     return

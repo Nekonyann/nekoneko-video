@@ -2,10 +2,11 @@
 import router from "@/router";
 import axios from "axios";
 import{ Message } from 'element-ui'
+import { generateUUID } from './uuid'
 
 const instance = axios.create({
     baseURL:'http://127.0.0.1:9000',
-    timeout:10000,
+    timeout:30000,
     withCredentials: true,
     headers: {
         // 'Content-Type': 'application/x-www-form-urlencoded'  
@@ -14,9 +15,19 @@ const instance = axios.create({
 
 //拦截器 - 请求拦截
 instance.interceptors.request.use(config=>{
+    //获取登录用户的标识
     let authorization = localStorage.getItem('authorization')
     if(authorization){
         config.headers['Authorization'] = authorization
+    }else{
+        //没有则获取游客标识
+        let clientId = localStorage.getItem('clientId')
+        if (!clientId) {
+            // 如果不存在，则生成新的clientId并存储在localStorage中
+            clientId = generateUUID()
+            localStorage.setItem('clientId', clientId)
+          }
+        config.headers['clientId'] = clientId
     }
     return config
 }, err=>{

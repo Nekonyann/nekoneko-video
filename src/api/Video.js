@@ -31,6 +31,30 @@ export function getVideoListByUid(params){
     })
 }
 
+export function getVideoDanmaku(params){
+    return request({
+        url:`${path}/getVideoDanmaku`,
+        method:'get',
+        params:{nid:params}
+    })  
+}
+
+export function updateVideoView(params){
+    return request({
+        url:`${path}/videoview`,
+        method:'get',
+        params:{nid:params}
+    })
+}
+
+export function updateVideoLike(params){
+    return request({
+        url:`${path}/videolike`,
+        method:'get',
+        params:{nid:params}
+    })
+}
+
 const cpath="/api/v0/comment"
 export function selectCommentByNid(params){
     return request({

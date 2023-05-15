@@ -4,9 +4,6 @@
         <div class="video-info">
             <div class="file-name">{{ FileData.originalFileName }}</div>
             <div class="file-status">
-                    <!-- <div class="bg-progress-bar">
-                        <p class="progress-bar"></p>
-                    </div> -->
                         <v-progress-linear
                         height="20"
                         :value="progress.value"
@@ -20,6 +17,7 @@
                 <p>
                     <span>{{ updateStatus }} {{progress.loaded}}/{{ FileData.fileSizeformat }} {{ progress.speed }}/s 预计剩余时间:{{ progress.remainingTime}}</span>
                     <span>{{ progress.value }}%</span>
+                    <!-- <span @click="handleCancel()" :disabled="!uploading">取消上传</span> -->
                 </p>
             </div>
         </div>
@@ -37,7 +35,7 @@
             <div>
                 <p>上传封面</p>
                 <div>点击选择封面
-                    <div class="none"><input type="file" ref="file" @change="inpTitleImageChange" accept=".png"/></div>
+                    <div class="none"><input type="file" ref="file" @change="inpTitleImageChange" accept=".png,.jpeg,.jpg"/></div>
                 </div>
             </div>
             <el-form-item label="视频简介" prop="profileText">
@@ -66,7 +64,7 @@
             </el-form-item>
             </el-form>
             <div>(可选)字幕
-                <button class="button" @click="showUploadSubtitleDialog()">+上传字幕</button>
+                <button class="button upload-sub-button" @click="showUploadSubtitleDialog()">+上传字幕</button>
                 <div class="file-list-preview">
                     <li v-for="(item,index) in VideoData.subtitles" :key="index">
                         <span>字幕语言:{{ item.lang }}.{{ item.type }}</span><span @click="deletFilePre(index)">删除</span>
@@ -97,7 +95,7 @@
                 </span>
             </el-dialog>
         </div>
-        <button @click="save()">保存</button>
+        <button :disabled="!videoUploadSuccess.value" class="upload-button" @click="save()">保存</button>
     </div>
 </v-app>
 </template>
@@ -107,6 +105,7 @@ import {formatTime} from '@/utils/utils.js';
 import {uploadSingeFile,checkFileExists,checkChunk,mergeChunk,uploadChunk} from '@/api/FileUp';
 import {uploadVideoInfo} from "@/api/Video";
 import {setUploadData,md5,VideoTotalSizeformat} from '@/utils/fileCheck';
+import axios from 'axios';
     export default{
         data(){
             return{
@@ -135,11 +134,10 @@ import {setUploadData,md5,VideoTotalSizeformat} from '@/utils/fileCheck';
                     originalFileName:'',
                     profileText:'', //简介
                     copyright:0,
-                    img:'', //封面
                     uploader:-1,
                     md5:null,
                     subtitles:[],//字幕信息
-                    titleImage:null//封面md5
+                    pic:null//封面信息
                 },
                 //字幕信息
                 subData:{
@@ -180,6 +178,7 @@ import {setUploadData,md5,VideoTotalSizeformat} from '@/utils/fileCheck';
                 uploadSubtitleDialogVisible:false,
                 uploadTitleImagesDialogVisible:false,
                 uploadDisable:true,
+                cancelSource: null,
                 options: [{
                 value: 'chs',
                 label: '中(简体)-日',
@@ -250,7 +249,7 @@ import {setUploadData,md5,VideoTotalSizeformat} from '@/utils/fileCheck';
                 if(typeof(this.titleImageData.file)!="undefined"){
                     let file = this.titleImageData.file
                     this.$message.info("校验中")
-                    let titleImageDataList = ["png","jpeg"]
+                    let titleImageDataList = ["png","jpeg","jpg"]
                     // 文件名
                     let titleImageName = file.name
                     // 文件后缀
@@ -275,9 +274,10 @@ import {setUploadData,md5,VideoTotalSizeformat} from '@/utils/fileCheck';
                         return
                     }
                     this.titleImageData.md5 = await md5(this.titleImageData.file)
-                    this.uploadDisable=false
+                    // this.uploadDisable=false
+                    this.uploadTitleImage()
                 }else{
-                    this.uploadDisable=true
+                    // this.uploadDisable=true
                 }
             },
             //校验字幕文件
@@ -318,16 +318,21 @@ import {setUploadData,md5,VideoTotalSizeformat} from '@/utils/fileCheck';
             },
             //上传封面
             async uploadTitleImage(){
-                // const titleImageInfo = setUploadData(this.titleImageData.file,this.titleImageData.md5,"image")
-                // let hasFile = await this.checkFile(titleImageInfo)
-                // if(hasFile){
-                //     this.$message.success="上传成功"
-                // }else{
-                //     await this.uploadSinge(titleImageInfo,this.titleImageUploadSuccess)
-                // }
-                // if(this.subtitleUploadSuccess.value){
-                //     this.VideoData.titleImage = this.titleImageData.md5
-                // }
+                const titleImageInfo = setUploadData(this.titleImageData.file,this.titleImageData.md5,"image")
+                let hasFile = await this.checkFile(titleImageInfo)
+                if(hasFile){
+                    this.$message({
+                    message: '上传成功',
+                    type: 'success'
+                    })
+                    this.subtitleUploadSuccess.value = true
+                }else{
+                    await this.uploadSinge(titleImageInfo,this.titleImageUploadSuccess.value)
+                    this.subtitleUploadSuccess.value = true
+                }
+                if(this.subtitleUploadSuccess.value){
+                    this.VideoData.pic = this.titleImageData.md5
+                }
             },
             //上传字幕
             async uploadSubtitle(){
@@ -361,8 +366,10 @@ import {setUploadData,md5,VideoTotalSizeformat} from '@/utils/fileCheck';
                 if(hasFile){
                         this.progress.bufferValue = 100
                         this.progress.value = 100
+                        this.progress.loaded = VideoTotalSizeformat(size)
                         this.updateStatus="上传成功"
                         this.progress.color="success"
+                        this.videoUploadSuccess.value = true
                 }else{
                     //文件分片判断
                     if(size<=this.Option.maxSize){
@@ -417,16 +424,19 @@ import {setUploadData,md5,VideoTotalSizeformat} from '@/utils/fileCheck';
                 data.append("originalFileName",FileInfo.originalFileName)
                 data.append("fileType",FileInfo.fileType)
                 this.uploadWatch()
+                this.cancelSource = axios.CancelToken.source();
+                console.log(this.cancelSource)
                 await uploadSingeFile(data,progressEvent => {
                        const progress = Math.round((progressEvent.loaded / progressEvent.total) * 100)
                        this.progress.complete = progressEvent.loaded
                        this.progress.value = progress
                        this.progress.loaded = VideoTotalSizeformat(progressEvent.loaded)
-                    }).then(async res=>{
+                    },{cancelToken: this.cancelSource.token}).then(async res=>{
                     if(res.data.code ===50001){
                         this.updateStatus="上传成功"
                         this.progress.value = 100
                         this.progress.color="success"
+                        this.videoUploadSuccess.value = true
                         uploadFileStatus = true
                     }   
                     if(res.data.code === 20010){
@@ -434,12 +444,16 @@ import {setUploadData,md5,VideoTotalSizeformat} from '@/utils/fileCheck';
                         this.progress.color="error"
                         this.$message.error(res.data.message)
                     }
-                }).catch(()=>{
-                    this.updateStatus="上传失败"
-                })
+                }).catch(thrown=>{
+                    if(axios.isCancel(thrown)){
+                        this.updateStatus="取消上传"
+                    }else{
+                        this.updateStatus="上传失败"
+                    }
+                }).finally()
                 clearInterval(this.timer)
-                this.progress.speed = "0"
-                this.progress.remainingTime ="00:00:00"
+                this.progress.speed = "-"
+                this.progress.remainingTime ="--"
                 // await updateVideo(data).then(res =>{
                 //     if(res.data.code){
                 //         console.log(res.data.message)
@@ -477,6 +491,7 @@ import {setUploadData,md5,VideoTotalSizeformat} from '@/utils/fileCheck';
                         this.updateStatus="上传成功"
                         this.videoUploadSuccess.value= true
                         this.progress.color="success"
+                        this.videoUploadSuccess.value = true
                     }else{
                         this.updateStatus="上传失败"
                         this.videoUploadSuccess.value= false
@@ -513,6 +528,7 @@ import {setUploadData,md5,VideoTotalSizeformat} from '@/utils/fileCheck';
                 const progressList = []
                 //开启监听
                 this.uploadWatch()
+                this.cancelSource = axios.CancelToken.source();
                 for(let index = 0;index<this.FileData.totalChunkNum;index++){
                     let chunkFile = chunkFileList[index]
                     let hasChuck =await this.checkChuck(index)
@@ -534,6 +550,13 @@ import {setUploadData,md5,VideoTotalSizeformat} from '@/utils/fileCheck';
                                 console.log(res.data.message)
                                 if(this.progress.value>=100)this.progress.value=100
                                 this.FileData.successNum++;
+                            }
+                        }).catch(thrown=>{
+                            if(axios.isCancel(thrown)){
+                                this.updateStatus="取消上传"
+                                return
+                            }else{
+                                this.updateStatus="上传失败"
                             }
                         })
                     }else{
@@ -557,7 +580,13 @@ import {setUploadData,md5,VideoTotalSizeformat} from '@/utils/fileCheck';
             //         console.log(data)
             //     })
             // },
-            
+
+            //取消上传
+            handleCancel(){
+                if (this.cancelSource) {
+                    this.cancelSource.cancel();
+                }
+            },
             //文件上传进度监听
             uploadWatch(){
                 let startBytes = 0
@@ -606,7 +635,7 @@ import {setUploadData,md5,VideoTotalSizeformat} from '@/utils/fileCheck';
     }
 </script>
 
-<style>
+<style lang="less" scoped>
 /** 
 .bg-progress-bar{
     height: 20px;
@@ -624,5 +653,29 @@ import {setUploadData,md5,VideoTotalSizeformat} from '@/utils/fileCheck';
         background: repeating-linear-gradient(115deg,#3cA4E5 0px,#3cA4E5 10px,#388DEA 10px,#0260A0 20px);
         }
  */
-    
+    .upload-sub-button{
+        color: #388DEA;
+        font-size: 14px;
+        
+        border: 1px solid #388DEA;
+        border-radius: .33333rem;
+    }
+    .upload-sub-button:hover{
+        color: #fff;
+        background-color: #388DEA;
+        transform: all ease .5s;
+    }
+    .upload-button{
+        background-color: #66ccff;
+        width: 86px;
+        height: 40px;
+        border-radius: .5rem;
+    }
+    .upload-button:disabled{
+        background-color: #ff6666;
+    }
+    .upload-button:hover{
+        color: #fff;
+        background-color:#388DEA;
+    }
 </style>

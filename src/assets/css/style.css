@@ -4,8 +4,11 @@
     font-family: "MiSans-medium","Microsoft Yahei",Arial, Helvetica,sans-serif;
 }
 
+html{
+    overflow-y: auto !important;
+}
 html,body,#app{
-    /* height: 100%; */
+    height: 100%;
     margin: 0;
     padding: 0;
 }
@@ -44,6 +47,16 @@ p{
     box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
     border-radius: 0px;
 }
+
+@media screen and (max-width:550px){
+    *::-webkit-scrollbar {
+        display: none;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    
+}
+
 /* 抖动 */
 @keyframes shake {
     10%, 90% {

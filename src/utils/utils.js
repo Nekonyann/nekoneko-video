@@ -54,12 +54,12 @@ export function getNowTime(){
     return `${hh}:${mm}:${ss}`
 }
 
-//格式化时间
+//格式化秒级时间
 export function formatTime(t){
     if(isNaN(t)) return "--"
     let remainingTimestamp = Math.ceil(t)
     let hh = parseInt(remainingTimestamp/60/60)
-    let mm = parseInt(remainingTimestamp/60)
+    let mm = parseInt(remainingTimestamp/60%60)
     let ss = parseInt(remainingTimestamp%60)
     hh = hh < 10?'0'+hh:hh 
     mm = mm < 10?'0'+mm:mm 
@@ -67,4 +67,17 @@ export function formatTime(t){
     return `${hh}:${mm}:${ss}`
 }
 
+//格式化毫秒级时间
+export function formatMillisecondTime(t){
+    let remainingTimestamp = t/1000
+    let hh = parseInt(remainingTimestamp/60/60)
+    let mm = parseInt(remainingTimestamp/60%60)
+    let ss = parseInt(remainingTimestamp%60)
+    mm = mm < 10?'0'+mm:mm 
+    ss = ss < 10?'0'+ss:ss
+    if(hh <= 0){
+        return `${mm}:${ss}`
+    }
+    return `${hh}:${mm}:${ss}`
+}
 export default{throttle,debounce}

@@ -64,6 +64,7 @@ export default{
                         this.$message.success("登录成功")
                         localStorage.setItem('authorization',res.headers.authorization)
                         localStorage.setItem('token',JSON.stringify(res.data.data))
+                        //this.$store.commit('UserInfo', JSON.parse(token))
                         this.$router.push({path:"/home",params:{noCache:true}})
                     }else{
                     localStorage.removeItem('token');

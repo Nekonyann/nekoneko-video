@@ -54,10 +54,12 @@
                 <div>她的视频</div>
                 <div class="zone-list-box" v-if="total!==0">
                     <div v-for="(video, index) of video" :key="index" class="grid-content">
-                        <router-link target="_blank" :to="{name: 'video',params:{nid:video.nid}}"><img src="@/assets/images/test.png">
+                        <router-link target="_blank" :to="{name: 'video',params:{nid:video.nid}}">
+                            <img v-if="video.pic ==null || video.pic ==''" src="@/assets/images/test.png">
+                        <img v-else :src="video.pic">
                         <div class="count">
                             <span><span><i class="el-icon-video-play"></i></span> <span>{{video.view}}</span></span>
-                            <span>{{ video.videoTime }}</span>
+                            <span>{{ formatTime(video.videoTime) }}</span>
                         </div>
                         <a class="title" :title="video.title">{{ video.title }}</a>
                         </router-link>
@@ -84,6 +86,7 @@
 <script>
 import {getUserInfoInVideo} from '@/api/User';
 import {getVideoListByUid} from '@/api/Video';
+import {formatMillisecondTime} from '@/utils/utils'
 export default{
     data(){
         return{
@@ -137,6 +140,9 @@ export default{
         },
         subscribe(){
             this.$message.info("你似乎点了关注按钮呢,但是没什么用")
+        },
+        formatTime(t){
+            return formatMillisecondTime(t)
         }
     }
 }
@@ -227,7 +233,7 @@ export default{
             }
 
             .count {
-                font-size: 12px;
+                font-size: 14px;
                 display: flex;
                 justify-content: space-between;
                 padding: 0 5px;
