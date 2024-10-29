@@ -1,7 +1,7 @@
 import SparkMD5 from 'spark-md5';
 import { Message } from 'element-ui';
 
-export function md5(file){
+export const md5 = (file) =>{
     return new Promise((resolve, reject) => {
         const fileReader = new FileReader();
         fileReader.onload = (e) =>{
@@ -15,9 +15,15 @@ export function md5(file){
     })
 }
 
-export function beforeUpload(){
-    let _fileList = this.fileList
-    let videolist = ["mp4","flv","mkv","avi","m4v"]
+/**
+ * (待修改)多文件校验
+ * @param {*} fileList 文件列表
+ * @param {*} checkFileType 需要检测的类型
+ * @param {*} maxSize 单位为B , 1G=1*1024*1024*1024
+ * @returns 
+ */
+export const beforeUploadMultiFileCheck = (fileList,checkFileType,maxSize) =>{
+    let _fileList = fileList
     let data = {}
     _fileList.forEach(item =>{
         let file = item
@@ -31,7 +37,7 @@ export function beforeUpload(){
         //文件大小
         let fileSize = file.size
         // if (!/\.(jpg|jpeg|png|JPG|PNG)$/.test(fileType))
-        let result = videolist.some(item =>{
+        let result = checkFileType.some(item =>{
             return item == fileType
         })
         if (result==false) {
@@ -40,9 +46,9 @@ export function beforeUpload(){
             return
         }
         // 限制上传文件的大小
-        const isLt = fileSize / 1024 / 1024 / 1024 < 1
+        const isLt = fileSize < maxSize
         if (!isLt) {
-            this.$message.error('呐呐,文件大小不得大于1GB!')
+            this.$message.error(`呐呐,文件大小不得大于${VideoTotalSizeformat(maxSize)}!`)
             return
         }
         let md5 = this.data.md5
@@ -53,8 +59,35 @@ export function beforeUpload(){
         return data
 }
 
+/**
+ * 单文件校验
+ * @param {*} file 文件
+ * @param {*} checkFileType 需要检测的类型
+ * @param {*} maxSize 单位为B , 1G=1*1024*1024*1024
+ * @returns true/false 是否验证通过
+ */
+export const beforeUploadSingleFileCheck = (file,checkFileType,maxSize) =>{
+    Message.info("校验中")
+    // 文件名
+    let videoname = file.name
+    // 文件后缀
+    let extension = videoname.replace(/.+\./,"")
+    //文件大小
+    let fileSize = file.size
+    if (checkFileType != extension) {
+        Message.error('您上传的似乎不是受支持的文件呢~')
+        return false
+    }
+    // 限制上传文件的大小
+    const isLt = fileSize / 1024 / 1024 < maxSize
+    if (!isLt) {
+        Message.error(`呐呐,文件大小不得大于${VideoTotalSizeformat(maxSize)}!`)
+        return false
+    }
+    return true
+}
 //格式化文件信息
-export function setUploadData(file,md5,type){
+export const setUploadData = (file,md5,type) =>{
     let data = {}
     // 文件名
     let fileName = file.name
@@ -80,8 +113,11 @@ export function setUploadData(file,md5,type){
     return data
 }
 
+export const getFileBasicInfo = () =>{
+
+}
 //格式化文件大小
-export function VideoTotalSizeformat(totalSize){
+export const VideoTotalSizeformat = (totalSize) =>{
     let formatSize = totalSize; 
     if (totalSize < 1024) {
         formatSize = formatSize.toFixed(2);

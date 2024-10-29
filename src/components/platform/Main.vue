@@ -48,7 +48,7 @@ import {setUploadData,md5} from '@/utils/fileCheck';
                 this.fileList.unshift(...e.target.files)
                 this.$message.info("校验中")
                 console.log(this.fileList)
-                this.data.md5 =await md5(this.fileList[0])
+                this.data.md5 = await md5(this.fileList[0])
                 this.checkSuccess = true
             },
             //跳转上传前校验文件

@@ -5,7 +5,7 @@ import{ Message } from 'element-ui'
 import { generateUUID } from './uuid'
 
 const instance = axios.create({
-    baseURL:'http://127.0.0.1:9000',
+    baseURL:process.env.VUE_APP_SERVE,
     timeout:30000,
     withCredentials: true,
     headers: {
@@ -63,6 +63,7 @@ instance.interceptors.response.use(res =>{
                 break;
             case 500:
                 err.message = '服务器错误'
+                console.log(err)
                 break;
             case 503:
                 err.message = '服务不可用'

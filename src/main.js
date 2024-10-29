@@ -6,9 +6,9 @@ import store from './store'
 import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 
-
 import utilsjs from './utils/utils'
 import './assets/css/style.css'
+import "./assets/icons/index"
 import vuetify from './plugins/vuetify'
 
 Vue.config.productionTip = false

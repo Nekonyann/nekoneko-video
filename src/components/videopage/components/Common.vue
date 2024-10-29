@@ -9,12 +9,13 @@
             <button type="submit" class="comment-submit" @click="insertComment()">发表评论</button>
         </div>
         <div class="comment-list">
+            <!-- 父级评论 -->
             <div v-for="(comment, index) of commentList" :key="index" class="comment-card">
                 <div>
                     <el-avatar :src="comment.owner.face"></el-avatar>
                 </div>
                 <div class="main">
-                    <p class="username">{{ comment.owner.username }} <span v-if="upid===comment.owner.uid"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="7" width="18" height="11.5" rx="2" fill="#FF6699"></rect><path d="M5.7 8.36V12.79C5.7 13.72 5.96 14.43 6.49 14.93C6.99 15.4 7.72 15.64 8.67 15.64C9.61 15.64 10.34 15.4 10.86 14.92C11.38 14.43 11.64 13.72 11.64 12.79V8.36H10.47V12.81C10.47 13.43 10.32 13.88 10.04 14.18C9.75 14.47 9.29 14.62 8.67 14.62C8.04 14.62 7.58 14.47 7.3 14.18C7.01 13.88 6.87 13.43 6.87 12.81V8.36H5.7ZM13.0438 8.36V15.5H14.2138V12.76H15.9838C17.7238 12.76 18.5938 12.02 18.5938 10.55C18.5938 9.09 17.7238 8.36 16.0038 8.36H13.0438ZM14.2138 9.36H15.9138C16.4238 9.36 16.8038 9.45 17.0438 9.64C17.2838 9.82 17.4138 10.12 17.4138 10.55C17.4138 10.98 17.2938 11.29 17.0538 11.48C16.8138 11.66 16.4338 11.76 15.9138 11.76H14.2138V9.36Z" fill="white"></path></svg></span></p>
+                    <p class="username">{{ comment.owner.username }} <span v-if="upid===comment.owner.uid"><svg-icon icon-class="icon-up" ></svg-icon></span></p>
                     <p class="text">{{ comment.content }}</p>
                     <p class="info">
                         <span class="time">{{ comment.createTime }}</span>
@@ -26,8 +27,9 @@
                         @click="checkDelete(comment.commentId)"
                         class="item">删除</a>
                     </p>
+                    <!-- 子级评论 -->
                     <div v-if="comment.commentReplyList.length!=0" class="reply-box">
-                        <div v-for="(commentReply, index) of comment.commentReplyList" :key="index" v-show="index<maxDisplay || showAll" class="reply-items">
+                        <div v-for="(commentReply, index) of comment.commentReplyList" :key="index" v-show="index<maxDisplay || showAllReply[comment.commentId]" class="reply-items">
                             <el-avatar :src="comment.owner.face"></el-avatar>
                             <p class="reply-username">{{ commentReply.owner.username }} <span v-if="upid===comment.owner.uid">[up]</span></p>
                             <!-- <p v-if="commentReply.owner">1</p> -->
@@ -39,10 +41,11 @@
                                 class="item">删除</a>
                             <span class="time">{{ commentReply.createTime }}</span>
                         </div>
-                        <div class="more-reply" v-if="comment.commentReplyList.length>maxDisplay && !showAll">
-                            剩余 {{ comment.commentReplyList.length-maxDisplay }} 条评论 <a @click="showAllCommentReply(index)" class="show">点击展开</a>
+                        <!-- 更多评论 -->
+                        <div class="more-reply" v-if="comment.commentReplyList.length>maxDisplay && !showAllReply[comment.commentId]">
+                            剩余 {{ comment.commentReplyList.length-maxDisplay }} 条评论 <a @click="showAllCommentReply(comment.commentId)" class="show">点击展开</a>
                         </div>
-                        <div class="more-reply" v-else><a @click="showAllCommentReply(index)">收起</a></div>
+                        <div class="more-reply" v-else-if="comment.commentReplyList.length>maxDisplay"><a @click="showAllCommentReply(comment.commentId)">收起</a></div>
                     </div>
                     <!-- 子评论评论框 -->
                     <div class="reply-box reply-comment" v-if="showBackCommentBox===index">
@@ -86,7 +89,7 @@ export default {
             },
             showBackCommentBox:-1,
             showAll:false,
-            showAllReply:[],
+            showAllReply:{},
             maxDisplay:3
         }
     },
@@ -94,12 +97,7 @@ export default {
         this.getComments(this.nid)
     },
     computed:{
-        computedGetComments(){
-            return this.commentList.map(comments => ({
-            ...comments,
-            showChildren: false
-        }))
-        }
+        
     },
     methods:{
         async getComments(nid){
@@ -138,6 +136,7 @@ export default {
         },
         showAllCommentReply(index){
             this.showAll = !this.showAll
+            this.$set(this.showAllReply, index, !this.showAllReply[index])
             // this.$set(this.showAll[index],index,!this.showAll[index])
         },
         async replyCommentMain(cid,reply_uid){

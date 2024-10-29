@@ -1,19 +1,27 @@
 //全局节流
 export function throttle(fn,interval){
     let timer = null
+    let firstClick = true
     return function() {
         timer && clearTimeout()
         let _context = this;
         let _args = arguments;
-        let callNow = !timer
+        let callNow = !timer && firstClick
+        //第一次点击立即执行
+        if(callNow) {
+            fn.apply(_context,_args)
+            firstClick = false
+            setTimeout(()=>{
+                firstClick = true
+            },interval)
+            return
+        }
         if (!timer) {
             timer = setTimeout(function() {
                 fn.apply(_context, _args);
                 timer = null
                 }, interval)
             }
-        //第一次点击立即执行
-        if(callNow) fn.apply(_context,_args)
         };
     }
 //全局防抖

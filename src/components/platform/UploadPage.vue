@@ -15,9 +15,10 @@
                         rounded
                         ></v-progress-linear>
                 <p>
-                    <span>{{ updateStatus }} {{progress.loaded}}/{{ FileData.fileSizeformat }} {{ progress.speed }}/s 预计剩余时间:{{ progress.remainingTime}}</span>
+                    <span v-if="!editFixed">{{ updateStatus }} {{progress.loaded}}/{{ FileData.fileSizeformat }} {{ progress.speed }}/s 预计剩余时间:{{ progress.remainingTime}}</span>
                     <span>{{ progress.value }}%</span>
-                    <!-- <span @click="handleCancel()" :disabled="!uploading">取消上传</span> -->
+                    <span v-if="!editFixed" @click="handleCancel()" class="upload-button" :disabled="!videoUploadSuccess.value || progress.bufferValue==0">取消上传</span>
+                    <span v-else>更换视频</span>
                 </p>
             </div>
         </div>
@@ -34,7 +35,9 @@
             </el-form-item>
             <div>
                 <p>上传封面</p>
-                <div>点击选择封面
+                <div class="upload-box" @click="test()" ref="uploadFileBox">
+                    <p class="info">点击选择封面</p>
+                    <img v-if="titleImageData!=null" :src="titleImageData.file"/>
                     <div class="none"><input type="file" ref="file" @change="inpTitleImageChange" accept=".png,.jpeg,.jpg"/></div>
                 </div>
             </div>
@@ -54,17 +57,22 @@
                 active-value=1
                 inactive-value=0
                 active-color="#13ce66"
-                inactive-color="#ff4949">
+                inactive-color="#ff4949"
+                :disabled="edit">
                 </el-switch>
             </el-form-item>
             <el-form-item label="分区" prop="region">
-                <el-select v-model="VideoData.region" placeholder="请选择分区">
+                <el-select v-model="VideoData.region" 
+                placeholder="请选择分区"
+                :disabled="edit">
                     <el-option label="暂无" value="-1"></el-option>
                 </el-select>
             </el-form-item>
             </el-form>
             <div>(可选)字幕
+                <el-tooltip class="item" effect="dark" content="仅支持ass格式的字幕" placement="right">
                 <button class="button upload-sub-button" @click="showUploadSubtitleDialog()">+上传字幕</button>
+                </el-tooltip>
                 <div class="file-list-preview">
                     <li v-for="(item,index) in VideoData.subtitles" :key="index">
                         <span>字幕语言:{{ item.lang }}.{{ item.type }}</span><span @click="deletFilePre(index)">删除</span>
@@ -103,12 +111,15 @@
 <script>
 import {formatTime} from '@/utils/utils.js';
 import {uploadSingeFile,checkFileExists,checkChunk,mergeChunk,uploadChunk} from '@/api/FileUp';
+import {selectByNid} from '@/api/Home';
 import {uploadVideoInfo} from "@/api/Video";
-import {setUploadData,md5,VideoTotalSizeformat} from '@/utils/fileCheck';
+import {setUploadData,md5,VideoTotalSizeformat,beforeUploadSingleFileCheck} from '@/utils/fileCheck';
 import axios from 'axios';
     export default{
         data(){
             return{
+                editFixed:false,//控制编辑状态
+                edit:false,//编辑状态
                 fileDataList:[],
                 //文件信息
                 FileData:{
@@ -213,6 +224,7 @@ import axios from 'axios';
         beforeCreate(){
         },
         mounted(){
+            this.init()
             this.fileDataList = this.$route.params
             if(Object.keys(this.$route.params).length||Object.keys(this.fileDataList).length){
                 let fileDataList = this.fileDataList
@@ -224,21 +236,23 @@ import axios from 'axios';
                 this.VideoData.customizeTitle = fileDataList.originalFileName
                 console.log(this.FileData)
                 this.checkUpload()
+            }else if(this.$route.query.type==="edit"){
+                this.edit=true
+                this.editTypeInit()
             }else {
                 this.$router.push({path:'/'})
             } 
         },
         beforeDestroy(){
+            this.timer&&clearInterval(this.timer)
             this.resetFileData()
         },
         computed: {
         },
         methods:{
             init(){
-                
-            },
-            checkFile(){
-            
+                this.FileData.fileSizeformat=0
+                this.timer&&clearInterval(this.timer)
             },
             deletFilePre(index){
                 this.VideoData.subtitles.splice(index,1)
@@ -248,30 +262,11 @@ import axios from 'axios';
                 this.titleImageData.file=e.target.files[0]
                 if(typeof(this.titleImageData.file)!="undefined"){
                     let file = this.titleImageData.file
-                    this.$message.info("校验中")
-                    let titleImageDataList = ["png","jpeg","jpg"]
-                    // 文件名
-                    let titleImageName = file.name
-                    // 文件后缀
-                    let extension = titleImageName.replace(/.+\./,"")
-                    //文件大小
-                    let fileSize = file.size
-
-                    let result = titleImageDataList.some(item =>{
-                        return item == extension
-                    })
-                    if (result==false) {
-                        this.$message.error('您上传的似乎不是受支持的文件呢~')
-                        // 重置
-                        this.titleImageData.file=null
-                    }
-
-                    // 限制上传文件的大小
-                    const isLt = fileSize / 1024 / 1024 < 20
-                    if (!isLt) {
-                        this.$message.error('呐呐,文件大小不得大于20MB!')
-                        this.titleImageData.file=null
-                        return
+                    let titleImageCheckList = ["png","jpeg","jpg"]
+                    const maxSize = 20*1024*1024
+                    let isSuccess = beforeUploadSingleFileCheck(file,titleImageCheckList,maxSize)
+                    if(!isSuccess){
+                        this.subData.file=null
                     }
                     this.titleImageData.md5 = await md5(this.titleImageData.file)
                     // this.uploadDisable=false
@@ -285,7 +280,26 @@ import axios from 'axios';
                 this.subData.file=e.target.files[0]
                 if(typeof(this.subData.file)!="undefined"){
                     let file = this.subData.file
-                    this.$message.info("校验中")
+                    let subTitleCheckList = ["ass"]
+                    const maxSize = 20*1024*1024
+                    // fileCheck方法检测文件类型是否符合
+                    let isSuccess = beforeUploadSingleFileCheck(file,subTitleCheckList,maxSize)
+                    // 不符合则重置文件选择
+                    if(!isSuccess){
+                        this.subData.file=null
+                    }
+                    this.subData.md5 = await md5(this.subData.file)
+                    this.uploadDisable=false
+                    this.uploadSubtitle()
+                }else{
+                    this.uploadDisable=true
+                }
+            },
+            /*async inpSubChange(e){
+                this.subData.file=e.target.files[0]
+                if(typeof(this.subData.file)!="undefined"){
+                    let file = this.subData.file
+                    this.$message.inf,o("校验中")
                     let subTitleList = ["ass"]
                     // 文件名
                     let videoname = file.name
@@ -312,7 +326,7 @@ import axios from 'axios';
                 }else{
                     this.uploadDisable=true
                 }
-            },
+            },*/
             showUploadSubtitleDialog(){
                 this.uploadSubtitleDialogVisible = true
             },
@@ -424,31 +438,29 @@ import axios from 'axios';
                 data.append("originalFileName",FileInfo.originalFileName)
                 data.append("fileType",FileInfo.fileType)
                 this.uploadWatch()
-                this.cancelSource = axios.CancelToken.source();
+                //this.cancelSource = axios.CancelToken.source();
                 console.log(this.cancelSource)
-                await uploadSingeFile(data,progressEvent => {
+                await uploadSingeFile(data,{
+                    cancelToken: this.cancelSource.token,
+                    onUploadProgress: progressEvent => {
                        const progress = Math.round((progressEvent.loaded / progressEvent.total) * 100)
                        this.progress.complete = progressEvent.loaded
                        this.progress.value = progress
                        this.progress.loaded = VideoTotalSizeformat(progressEvent.loaded)
-                    },{cancelToken: this.cancelSource.token}).then(async res=>{
+                    }}).then(async res=>{
                     if(res.data.code ===50001){
-                        this.updateStatus="上传成功"
-                        this.progress.value = 100
-                        this.progress.color="success"
-                        this.videoUploadSuccess.value = true
+                        this.uploadStatusSuccess()
                         uploadFileStatus = true
                     }   
                     if(res.data.code === 20010){
-                        this.updateStatus="上传失败"
-                        this.progress.color="error"
+                        this.uploadStatusFail()
                         this.$message.error(res.data.message)
                     }
                 }).catch(thrown=>{
                     if(axios.isCancel(thrown)){
                         this.updateStatus="取消上传"
                     }else{
-                        this.updateStatus="上传失败"
+                        this.uploadStatusFail()
                     }
                 }).finally()
                 clearInterval(this.timer)
@@ -538,13 +550,16 @@ import axios from 'axios';
                         data.append("file",chunkFile)
                         data.append("fileMD5",this.FileData.md5)
                         data.append("index",index)
-                        await uploadChunk(data, progressEvent => {
+                        await uploadChunk(data, {
+                            cancelToken: this.cancelSource.token,
+                            onUploadProgress: progressEvent => {
                             progressList[index] = progressEvent.loaded;
                             // 计算已上传的总进度
                             this.progress.complete = progressList.reduce((p, c) => p + c)
                             const progress  = Math.round((this.progress.complete / this.FileData.fileSize) * 100)
                             this.progress.value = progress
                             this.progress.loaded = VideoTotalSizeformat(this.progress.complete)
+                            }
                         }).then(res=>{
                             if(res.data.code===50001){
                                 console.log(res.data.message)
@@ -556,7 +571,7 @@ import axios from 'axios';
                                 this.updateStatus="取消上传"
                                 return
                             }else{
-                                this.updateStatus="上传失败"
+                                this.uploadStatusFail()
                             }
                         })
                     }else{
@@ -584,7 +599,7 @@ import axios from 'axios';
             //取消上传
             handleCancel(){
                 if (this.cancelSource) {
-                    this.cancelSource.cancel();
+                    this.cancelSource.cancel("取消上传")
                 }
             },
             //文件上传进度监听
@@ -594,6 +609,7 @@ import axios from 'axios';
                 this.timer = setInterval(()=>{
                 //const speed = (this.progress.complete - startBytes) / (Date.now()  - startTime)*1000
                 const speed = (this.progress.complete - startBytes)/1
+                console.log(this.progress.complete)
                 startBytes = this.progress.complete
                 const remainingSize = this.FileData.fileSize - this.progress.complete
                 let remainingTime = remainingSize / speed 
@@ -621,17 +637,40 @@ import axios from 'axios';
                                 this.resetFileData()
                                 this.$router.push({path:'/'})
                             }else{
-                                this.$message.error("上传失败")
-                                this.progress.color="error"
+                                this.uploadStatusFail()
                             }
                         })
                     }
                 })
             },
-
+            //编辑模式初始化数据
+            async editTypeInit() {
+                await selectByNid(this.$route.query.nid).then(res=>{
+                    console.log(res)
+                    if(res.data.code ===20011){
+                        const resData = res.data.data
+                        this.VideoData.customizeTitle = resData.title
+                        this.VideoData.profile = resData.profile
+                        this.FileData.originalFileName = resData.fileName
+                        this.editFixed = true
+                        this.progress.value = 100;
+                    }
+                })
+            },
+            //上传成功提示处理
+            uploadStatusSuccess(){
+                this.updateStatus="上传成功"
+                this.progress.value = 100
+                this.progress.color="success"
+                this.videoUploadSuccess.value = true
+            },
+            //上传失败提示处理
+            uploadStatusFail(){
+                this.updateStatus="上传失败"
+                this.progress.color="error"
+                this.timer&&clearInterval(this.timer)
+            }
         },
-
-
     }
 </script>
 

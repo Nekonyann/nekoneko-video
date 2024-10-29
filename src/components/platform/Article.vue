@@ -23,8 +23,8 @@
             </div>
           </div>
           <div class="button-box">
-            <el-button type="primary">编辑</el-button>
-            <el-button type="danger">删除</el-button>
+            <el-button type="primary" @click="editVideo(video.nid)">编辑</el-button>
+            <el-button type="danger" @click="deleteVideo(video.title,video.nid)">删除</el-button>
           </div>
         </div>
     </div>
@@ -41,7 +41,7 @@
 </template>
 
 <script>
-import {getVideoListByUid} from '@/api/Video';
+import {getVideoListByUid, deleteVideoInfo} from '@/api/Video';
 import {formatMillisecondTime} from '@/utils/utils'
 export default {
   data(){
@@ -75,6 +75,41 @@ export default {
             this.$message.warning(res.data.message)
         }
       })
+    },
+    editVideo(nid){
+        const route = {
+        path: '/videoupload/uploadpage',
+        query: { "type":"edit", nid }
+      };
+      this.$router.push(route);
+    },
+    deleteVideo(title,nid){
+      this.$confirm(`此操作将永久删除[${title}], 是否继续?`, '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          deleteVideoInfo(nid).then(res=>{
+            if(res.data.code === 20021){
+              this.$message({
+              type: 'success',
+              message: `${res.data.message}`
+            });
+            this.getUserVideo(this.uid)
+            }else{
+              this.$message({
+                type: 'error',
+                message: `${res.data.message}`
+              })
+            }
+          })
+          
+        }).catch(() => {
+          this.$message({
+            type: 'info',
+            message: '已取消删除'
+          });          
+        });
     },
     handleCurrentChange(val){
       this.index = val

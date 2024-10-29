@@ -10,6 +10,13 @@ export function uploadVideoInfo(data){
     })
 }
 
+export function deleteVideoInfo(nid){
+    return request({
+        url:`${path}/delete/${nid}`,
+        method:'post',
+    })
+}
+
 export function selectByKeywords(params){
     return request({
         url:`${path}/selectByKeywords`,
