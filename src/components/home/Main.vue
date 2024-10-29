@@ -28,27 +28,45 @@
             <div class="card-head">
                 <div class="name">首页视频</div>
             </div>
-            <div class="zone-list-box" v-if="(total!=0)" style="overflow:auto; min-height: 300px;height: 100%"
-            v-infinite-scroll="loadMore"
-            infinite-scroll-disabled="disable"
-            infinite-scroll-distance="80"
-            :style="{height: `calc(100vh)`}"> 
-                <div v-for="(data, index) of data" :key="index" class="grid-content" style=" margin-right: 5px;">
-                    <router-link target="_blank" :to="{name: 'video',params:{nid:data.nid}}"><img v-if="data.pic ==null || data.pic ==''" src="@/assets/images/test.png">
-                        <img v-else :src="data.pic">
-                        <div class="count">
-                        <span><span><i class="el-icon-video-play"></i></span> <span>{{data.view}} {{ data.nid }}</span></span>
-                        <span>{{ formatTime(data.videoTime) }}</span>
+            <el-skeleton class="zone-list-box" :loading="loading" animated count="10">
+                <template slot="template">
+                    <el-skeleton-item
+                    variant="image"
+                    style="width: 180px; height: 120px; margin-right: 5px;"
+                    />
+                    <div style="padding: 14px;">
+                        <el-skeleton-item variant="h3" style="width: 50%;" />
+                        <div
+                            style="display: flex; align-items: center; justify-items: space-between; margin-top: 16px; height: 16px;"
+                        >
+                            <el-skeleton-item variant="text" style="margin-right: 16px;" />
+                        </div>
                     </div>
-                    <a class="title" :title="data.title">{{ data.title }}</a>
-                    </router-link>
-                    <router-link :to="{name:'userhome',params:{uid:data.owner.uid}}">
-                        <div class="upload-user"><span>up|</span> {{ data.owner.username }}</div>
-                    </router-link>
-                </div>
-                <div v-if="loading" class="info">加载中</div>
-                <div v-else class="info">没有更多数据惹QAQ.......</div>
-            </div>
+                </template>
+                <template>
+                    <div class="zone-list-box" v-if="(total!=0)" style="overflow:auto; min-height: 300px;height: 100%"
+                    v-infinite-scroll="loadMore"
+                    infinite-scroll-disabled="disable"
+                    infinite-scroll-distance="80"
+                    :style="{height: `calc(100vh)`}"> 
+                        <div v-for="(data, index) of data" :key="index" class="grid-content" style=" margin-right: 5px;">
+                            <router-link target="_blank" :to="{name: 'video',params:{nid:data.nid}}"><img v-if="data.pic ==null || data.pic ==''" src="@/assets/images/test.png">
+                                <img v-else :src="data.pic">
+                                <div class="count">
+                                <span><span><i class="el-icon-video-play"></i></span> <span>{{data.view}} {{ data.nid }}</span></span>
+                                <span>{{ formatTime(data.videoTime) }}</span>
+                            </div>
+                            <a class="title" :title="data.title">{{ data.title }}</a>
+                            </router-link>
+                            <router-link :to="{name:'userhome',params:{uid:data.owner.uid}}">
+                                <div class="upload-user"><span>up|</span> {{ data.owner.username }}</div>
+                            </router-link>
+                        </div>
+                        <div v-if="loading" class="info">加载中</div>
+                        <div v-else class="info">没有更多数据惹QAQ.......</div>
+                    </div>
+                </template>
+            </el-skeleton>
         </div>
         <div class="function-box">
             <button @click="loadMore()" class="get-more function-button">
