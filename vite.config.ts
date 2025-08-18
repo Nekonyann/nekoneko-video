@@ -5,6 +5,8 @@ import { fileURLToPath, URL } from 'node:url'
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 
+import { NaiveUiResolver } from 'unplugin-vue-components/resolvers'
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
@@ -14,11 +16,22 @@ export default defineConfig({
         /\.[tj]sx?$/, // .ts, .tsx, .js, .jsx
         /\.vue$/,
         /\.vue\?vue/, // .vue
-        /\.md$/ // .md
+        /\.md$/, // .md
+        '/auto-imports.d.ts'
       ],
-      imports: ['vue', 'vue-router', 'pinia']
+      imports: [
+        'vue',
+        'vue-router',
+        'pinia',
+        {
+          'naive-ui': ['useDialog', 'useMessage', 'useNotification', 'useLoadingBar']
+        }
+      ],
+      dts: true
     }),
-    Components()
+    Components({
+      resolvers: [NaiveUiResolver()]
+    })
   ],
   resolve: {
     alias: {
